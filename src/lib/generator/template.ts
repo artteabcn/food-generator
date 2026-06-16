@@ -24,8 +24,9 @@ export const siteConfig: SiteConfig = {
   contact: {
     whatsapp: ${JSON.stringify(data.whatsapp)},
     whatsappDisplay: ${JSON.stringify(data.whatsappDisplay)},
-    instagram: ${JSON.stringify(data.instagram)},
-    instagramUrl: ${JSON.stringify(data.instagramUrl)},
+    socialType: ${JSON.stringify(data.socialType)},
+    socialHandle: ${JSON.stringify(data.socialHandle ?? "")},
+    socialUrl: ${JSON.stringify(data.socialUrl ?? "")},
     address: ${JSON.stringify(data.address)},
     mapsLat: ${data.mapsLat},
     mapsLng: ${data.mapsLng},
@@ -155,11 +156,10 @@ export function generateEnJson(data: SiteFormData): string {
       address: data.address,
       whatsappLabel: "WhatsApp",
       directions: "Open in Google Maps",
-      instagram: "Follow on Instagram",
     },
-    instagram: {
+    social: {
       title: "Latest from the room",
-      follow: data.instagram,
+      follow: data.socialHandle ? `Follow us · ${data.socialHandle}` : "Follow us",
     },
     footer: {
       tagline: data.footerTagline,

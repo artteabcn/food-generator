@@ -24,8 +24,9 @@ export const SiteFormSchema = z.object({
   // Step 2 — Contact
   whatsapp: z.string().min(1, "WhatsApp number required"),
   whatsappDisplay: z.string().min(1, "WhatsApp display number required"),
-  instagram: z.string().min(1, "Instagram handle required"),
-  instagramUrl: z.string().url("Must be a valid URL"),
+  socialType: z.enum(["instagram", "facebook", "none"]).default("none"),
+  socialHandle: z.string().optional(),
+  socialUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   address: z.string().min(1, "Address required"),
   mapsUrl: z.string().url("Paste a Google Maps URL").optional(),
   mapsLat: z.number(),

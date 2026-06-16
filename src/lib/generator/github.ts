@@ -1,5 +1,16 @@
 const GITHUB_API = "https://api.github.com";
 
+function ghHeaders(token: string, extra?: Record<string, string>): Record<string, string> {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json",
+    "User-Agent": "food-generator/1.0",
+    "X-GitHub-Api-Version": "2022-11-28",
+    ...extra,
+  };
+}
+
 export async function createRepoFromTemplate(
   token: string,
   owner: string,
@@ -11,12 +22,7 @@ export async function createRepoFromTemplate(
     `${GITHUB_API}/repos/${owner}/${templateRepo}/generate`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+      headers: ghHeaders(token),
       body: JSON.stringify({
         owner: newOwner,
         name: newRepoName,
@@ -38,10 +44,7 @@ export async function getDefaultBranch(
   repo: string
 ): Promise<string> {
   const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
+    headers: ghHeaders(token),
   });
   const data = (await res.json()) as { default_branch: string };
   return data.default_branch ?? "main";
@@ -55,12 +58,7 @@ export async function getFileSha(
 ): Promise<string | undefined> {
   const res = await fetch(
     `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-      },
-    }
+    { headers: ghHeaders(token) }
   );
   if (!res.ok) return undefined;
   const data = (await res.json()) as { sha: string };
@@ -72,7 +70,7 @@ export async function commitFile(
   owner: string,
   repo: string,
   path: string,
-  content: string, // base64
+  content: string,
   message: string,
   branch: string,
   sha?: string
@@ -84,11 +82,7 @@ export async function commitFile(
     `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,
     {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "Content-Type": "application/json",
-      },
+      headers: ghHeaders(token),
       body: JSON.stringify(body),
     }
   );
@@ -105,45 +99,21 @@ export async function addRepoVariable(
   name: string,
   value: string
 ): Promise<void> {
-  // Try to create first
   const createRes = await fetch(
     `${GITHUB_API}/repos/${owner}/${repo}/actions/variables`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "Content-Type": "application/json",
-      },
+      headers: ghHeaders(token),
       body: JSON.stringify({ name, value }),
     }
   );
 
-  if (!createRes.ok && createRes.status !== 422) {
-    // Try PATCH if create failed for reasons other than "already exists"
+  if (!createRes.ok) {
     await fetch(
       `${GITHUB_API}/repos/${owner}/${repo}/actions/variables/${name}`,
       {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, value }),
-      }
-    );
-  } else if (createRes.status === 422) {
-    // Already exists — update it
-    await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/actions/variables/${name}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "Content-Type": "application/json",
-        },
+        headers: ghHeaders(token),
         body: JSON.stringify({ name, value }),
       }
     );

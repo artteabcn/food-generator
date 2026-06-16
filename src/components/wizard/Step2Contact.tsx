@@ -8,23 +8,20 @@ interface Props {
 }
 
 function parseMapsUrl(url: string): { lat: number; lng: number } | null {
-  // Pattern: @lat,lng (Google Maps share URLs)
   const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (atMatch) {
-    return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
-  }
-  // Pattern: ?q=lat,lng
+  if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
   const qMatch = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (qMatch) {
-    return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
-  }
-  // Pattern: ll=lat,lng
+  if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
   const llMatch = url.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (llMatch) {
-    return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
-  }
+  if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
   return null;
 }
+
+const SOCIAL_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "instagram", label: "Instagram" },
+  { value: "facebook", label: "Facebook" },
+] as const;
 
 export default function Step2Contact({ onNext, onBack }: Props) {
   const {
@@ -38,6 +35,7 @@ export default function Step2Contact({ onNext, onBack }: Props) {
   const mapsLat = watch("mapsLat");
   const mapsLng = watch("mapsLng");
   const mapsUrl = watch("mapsUrl");
+  const socialType = watch("socialType") ?? "none";
 
   function handleMapsUrlChange(e: React.ChangeEvent<HTMLInputElement>) {
     const url = e.target.value;
@@ -50,20 +48,28 @@ export default function Step2Contact({ onNext, onBack }: Props) {
   }
 
   async function handleNext() {
-    const valid = await trigger([
+    const fields: (keyof SiteFormData)[] = [
       "whatsapp",
       "whatsappDisplay",
-      "instagram",
-      "instagramUrl",
       "address",
       "mapsLat",
       "mapsLng",
-    ]);
+    ];
+    if (socialType !== "none") {
+      fields.push("socialHandle", "socialUrl");
+    }
+    const valid = await trigger(fields);
     if (valid) onNext();
   }
 
-  const coordsSet =
-    mapsLat !== 13.7563 || mapsLng !== 100.5018 || mapsUrl;
+  const coordsSet = mapsLat !== 13.7563 || mapsLng !== 100.5018 || mapsUrl;
+
+  const socialPlaceholders = {
+    instagram: { handle: "@lejardin.bkk", url: "https://instagram.com/lejardin.bkk" },
+    facebook: { handle: "Le Jardin Bangkok", url: "https://facebook.com/lejardinbkk" },
+    none: { handle: "", url: "" },
+  };
+  const ph = socialPlaceholders[socialType as keyof typeof socialPlaceholders] ?? socialPlaceholders.none;
 
   return (
     <div>
@@ -81,11 +87,7 @@ export default function Step2Contact({ onNext, onBack }: Props) {
             hasError={!!errors.whatsapp}
           />
         </Field>
-        <Field
-          label="WhatsApp Display"
-          error={errors.whatsappDisplay?.message}
-          hint="Formatted for display"
-        >
+        <Field label="WhatsApp Display" error={errors.whatsappDisplay?.message} hint="Formatted for display">
           <Input
             {...register("whatsappDisplay")}
             placeholder="+66 81 234 5678"
@@ -94,22 +96,65 @@ export default function Step2Contact({ onNext, onBack }: Props) {
         </Field>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Instagram Handle" error={errors.instagram?.message}>
-          <Input
-            {...register("instagram")}
-            placeholder="@lejardin.bkk"
-            hasError={!!errors.instagram}
-          />
-        </Field>
-        <Field label="Instagram URL" error={errors.instagramUrl?.message}>
-          <Input
-            {...register("instagramUrl")}
-            placeholder="https://instagram.com/lejardin.bkk"
-            hasError={!!errors.instagramUrl}
-          />
-        </Field>
+      {/* Social media choice */}
+      <div style={{ marginBottom: "1.25rem" }}>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#374151", marginBottom: 8 }}>
+          Social Media
+        </label>
+        <div style={{ display: "flex", gap: 8 }}>
+          {SOCIAL_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                setValue("socialType", opt.value);
+                if (opt.value === "none") {
+                  setValue("socialHandle", "");
+                  setValue("socialUrl", "");
+                }
+              }}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 8,
+                border: `2px solid ${socialType === opt.value ? "#111827" : "#e5e7eb"}`,
+                background: socialType === opt.value ? "#111827" : "white",
+                color: socialType === opt.value ? "white" : "#6b7280",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {socialType !== "none" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Field
+            label={`${socialType === "instagram" ? "Instagram" : "Facebook"} Handle`}
+            error={errors.socialHandle?.message}
+          >
+            <Input
+              {...register("socialHandle")}
+              placeholder={ph.handle}
+              hasError={!!errors.socialHandle}
+            />
+          </Field>
+          <Field
+            label={`${socialType === "instagram" ? "Instagram" : "Facebook"} URL`}
+            error={errors.socialUrl?.message}
+          >
+            <Input
+              {...register("socialUrl")}
+              placeholder={ph.url}
+              hasError={!!errors.socialUrl}
+            />
+          </Field>
+        </div>
+      )}
 
       <Field label="Full Address" error={errors.address?.message}>
         <Textarea
@@ -132,7 +177,6 @@ export default function Step2Contact({ onNext, onBack }: Props) {
         />
       </Field>
 
-      {/* Coordinate display */}
       <div
         style={{
           display: "flex",
@@ -145,22 +189,13 @@ export default function Step2Contact({ onNext, onBack }: Props) {
           alignItems: "center",
         }}
       >
-        <span
-          style={{
-            fontSize: 12,
-            color: coordsSet ? "#166534" : "#9ca3af",
-            fontWeight: 500,
-          }}
-        >
+        <span style={{ fontSize: 12, color: coordsSet ? "#166534" : "#9ca3af", fontWeight: 500 }}>
           {coordsSet ? "✓ Coordinates detected" : "Coordinates"}
         </span>
         <span style={{ fontSize: 12, color: "#6b7280", marginLeft: "auto" }}>
-          Lat: <strong>{mapsLat?.toFixed(6)}</strong> &nbsp; Lng:{" "}
-          <strong>{mapsLng?.toFixed(6)}</strong>
+          Lat: <strong>{mapsLat?.toFixed(6)}</strong> &nbsp; Lng: <strong>{mapsLng?.toFixed(6)}</strong>
         </span>
-        <span style={{ fontSize: 11, color: "#9ca3af" }}>
-          (edit below if needed)
-        </span>
+        <span style={{ fontSize: 11, color: "#9ca3af" }}>(edit below if needed)</span>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
