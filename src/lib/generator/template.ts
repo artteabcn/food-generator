@@ -47,6 +47,39 @@ export const siteConfig: SiteConfig = {
 `;
 }
 
+export function generateWorkflow(branch: string): string {
+  return `name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [${branch}]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm install
+
+      - run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler pages deploy dist --project-name=\${{ vars.CF_PROJECT_NAME }} --branch=${branch}
+        env:
+          CLOUDFLARE_API_TOKEN: \${{ vars.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: \${{ vars.CF_ACCOUNT_ID }}
+`;
+}
+
 export function generateWranglerToml(data: SiteFormData): string {
   return `name = "${data.slug}"
 compatibility_date = "2025-02-13"

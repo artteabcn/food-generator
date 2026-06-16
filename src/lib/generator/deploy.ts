@@ -3,6 +3,7 @@ import {
   generateSiteConfig,
   generateWranglerToml,
   generateEnJson,
+  generateWorkflow,
 } from "./template";
 import {
   createRepoFromTemplate,
@@ -154,38 +155,25 @@ export async function deployRestaurantSite(
 
   // 5. Commit customized wrangler.toml
   const wranglerContent = generateWranglerToml(data);
-  const wranglerSha = await getFileSha(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "wrangler.toml"
-  );
-  await commitFile(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "wrangler.toml",
-    toBase64(wranglerContent),
-    "chore: configure wrangler",
-    branch,
-    wranglerSha
-  );
+  const wranglerSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "wrangler.toml");
+  await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "wrangler.toml", toBase64(wranglerContent), "chore: configure wrangler", branch, wranglerSha);
 
-  // 6. Create CF Pages project
+  // 6. Overwrite workflow with correct branch + vars (not secrets)
+  const workflowContent = generateWorkflow(branch);
+  const workflowSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, ".github/workflows/deploy.yml");
+  await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, ".github/workflows/deploy.yml", toBase64(workflowContent), "chore: configure deployment workflow", branch, workflowSha);
+
+  // 7. Create CF Pages project
   const { subdomain } = await createPagesProject(
     env.CF_API_TOKEN,
     env.CF_ACCOUNT_ID,
     cfProjectName
   );
 
-  // 7. Add CF_PROJECT_NAME as a GitHub Actions variable
-  await addRepoVariable(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "CF_PROJECT_NAME",
-    cfProjectName
-  );
+  // 8. Set all required GitHub Actions variables (CF_API_TOKEN stored as variable, not secret)
+  await addRepoVariable(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "CF_PROJECT_NAME", cfProjectName);
+  await addRepoVariable(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "CF_ACCOUNT_ID", env.CF_ACCOUNT_ID);
+  await addRepoVariable(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "CF_API_TOKEN", env.CF_API_TOKEN);
 
   const pagesUrl = `https://${subdomain}`;
 
