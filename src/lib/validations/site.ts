@@ -7,6 +7,16 @@ const DaySchema = z
   })
   .nullable();
 
+export const MenuItemSchema = z.object({
+  category: z.string().default(""),
+  name: z.string().min(1, "Item name required"),
+  description: z.string().default(""),
+  price: z.string().default(""),
+  tags: z.array(z.enum(["veg", "vegan", "gf", "spicy"])).default([]),
+});
+
+export type MenuItem = z.infer<typeof MenuItemSchema>;
+
 export const SiteFormSchema = z.object({
   // Step 1 — Basic
   name: z.string().min(1, "Restaurant name required"),
@@ -55,7 +65,8 @@ export const SiteFormSchema = z.object({
   footerAddressShort: z.string().min(1, "Short address required"),
   footerHoursShort: z.string().min(1, "Hours summary required"),
 
-  // Step 5 — Photos (base64 strings from file upload)
+  // Step 5 — Menu (photos and/or written items)
+  menuMode: z.enum(["photos", "items", "both"]).default("photos"),
   photos: z
     .array(
       z.object({
@@ -64,8 +75,8 @@ export const SiteFormSchema = z.object({
         mimeType: z.string(),
       })
     )
-    .min(1, "At least 1 photo required")
     .max(6, "Maximum 6 photos"),
+  menuItems: z.array(MenuItemSchema).default([]),
 
   // Step 6 — Theme
   theme: z.enum([

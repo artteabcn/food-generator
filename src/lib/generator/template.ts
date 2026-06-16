@@ -40,6 +40,7 @@ export const siteConfig: SiteConfig = {
     saturday: ${JSON.stringify(data.hours.saturday)},
     sunday: ${JSON.stringify(data.hours.sunday)},
   },
+  menuMode: ${JSON.stringify(data.menuMode)},
   images: {
     menu: ${JSON.stringify(photos)},
   },
@@ -200,6 +201,13 @@ export function generateEnJson(data: SiteFormData): string {
       addressShort: data.footerAddressShort,
       hoursShort: data.footerHoursShort,
     },
+    menuItems: (data.menuItems ?? []).map(item => ({
+      category: item.category,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      tags: item.tags,
+    })),
   };
   return JSON.stringify(json, null, 2);
 }

@@ -6,7 +6,7 @@ import Step1Basic from "./Step1Basic";
 import Step2Contact from "./Step2Contact";
 import Step3Hours from "./Step3Hours";
 import Step4Content from "./Step4Content";
-import Step5Photos from "./Step5Photos";
+import Step5Menu from "./Step5Menu";
 import Step6Theme from "./Step6Theme";
 import Step7Deploy, { type DeploySuccess } from "./Step7Deploy";
 
@@ -15,7 +15,7 @@ const STEPS = [
   { id: 2, label: "Contact" },
   { id: 3, label: "Hours" },
   { id: 4, label: "Content" },
-  { id: 5, label: "Photos" },
+  { id: 5, label: "Menu" },
   { id: 6, label: "Theme" },
   { id: 7, label: "Deploy" },
 ];
@@ -34,7 +34,9 @@ const DEFAULT_VALUES: Partial<SiteFormData> = {
     saturday: { open: "18:00", close: "00:00" },
     sunday: { open: "18:00", close: "00:00" },
   },
+  menuMode: "photos",
   photos: [],
+  menuItems: [],
   mapsLat: 13.7563,
   mapsLng: 100.5018,
 };
@@ -148,7 +150,7 @@ export default function WizardShell() {
           {step === 2 && <Step2Contact onNext={next} onBack={prev} />}
           {step === 3 && <Step3Hours onNext={next} onBack={prev} />}
           {step === 4 && <Step4Content onNext={next} onBack={prev} />}
-          {step === 5 && <Step5Photos onNext={next} onBack={prev} />}
+          {step === 5 && <Step5Menu onNext={next} onBack={prev} />}
           {step === 6 && <Step6Theme onNext={next} onBack={prev} />}
           {step === 7 && (
             <Step7Deploy onBack={prev} onSuccess={setDeployResult} />
