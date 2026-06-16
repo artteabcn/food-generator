@@ -8,6 +8,7 @@ import {
   createRepoFromTemplate,
   commitFile,
   getFileSha,
+  getDefaultBranch,
   addRepoVariable,
 } from "./github";
 import { createPagesProject } from "./cloudflare-api";
@@ -50,8 +51,9 @@ export async function deployRestaurantSite(
     env.GITHUB_OWNER
   );
 
-  // Wait for the repo to be ready
+  // Wait for the repo to be ready, then detect actual default branch
   await new Promise((r) => setTimeout(r, 3000));
+  const branch = await getDefaultBranch(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName);
 
   // 2. Commit customized src/config/site.ts
   const siteConfigContent = generateSiteConfig(data);
@@ -68,7 +70,7 @@ export async function deployRestaurantSite(
     "src/config/site.ts",
     toBase64(siteConfigContent),
     "chore: configure restaurant site",
-    "main",
+    branch,
     siteConfigSha
   );
 
@@ -88,7 +90,7 @@ export async function deployRestaurantSite(
     "src/i18n/en.json",
     toBase64(enJson),
     "content: add restaurant translations",
-    "main",
+    branch,
     enSha
   );
 
@@ -106,7 +108,7 @@ export async function deployRestaurantSite(
     "src/i18n/fr.json",
     toBase64(enJson),
     "content: add FR placeholder translations",
-    "main",
+    branch,
     frSha
   );
 
@@ -123,7 +125,7 @@ export async function deployRestaurantSite(
     "src/i18n/th.json",
     toBase64(enJson),
     "content: add TH placeholder translations",
-    "main",
+    branch,
     thSha
   );
 
@@ -145,7 +147,7 @@ export async function deployRestaurantSite(
       path,
       photo.data, // already base64
       `content: add menu photo ${i + 1}`,
-      "main",
+      branch,
       existingSha
     );
   }
@@ -165,7 +167,7 @@ export async function deployRestaurantSite(
     "wrangler.toml",
     toBase64(wranglerContent),
     "chore: configure wrangler",
-    "main",
+    branch,
     wranglerSha
   );
 
