@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { SiteFormData } from "@/lib/validations/site";
 import { StepHeader, Field, Input, Textarea, NavButtons } from "./shared";
@@ -37,13 +38,43 @@ export default function Step2Contact({ onNext, onBack }: Props) {
   const mapsUrl = watch("mapsUrl");
   const socialType = watch("socialType") ?? "none";
 
-  function handleMapsUrlChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState("");
+
+  async function handleMapsUrlChange(e: React.ChangeEvent<HTMLInputElement>) {
     const url = e.target.value;
     setValue("mapsUrl", url);
+    setResolveError("");
+
+    // Try parsing directly first (works for full URLs with @lat,lng)
     const parsed = parseMapsUrl(url);
     if (parsed) {
       setValue("mapsLat", parsed.lat);
       setValue("mapsLng", parsed.lng);
+      return;
+    }
+
+    // If it looks like a short/redirect URL, resolve server-side
+    if (url.startsWith("http") && url.length > 10) {
+      setResolving(true);
+      try {
+        const res = await fetch("/api/resolve-maps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json() as { lat?: number; lng?: number; error?: string };
+        if (data.lat && data.lng) {
+          setValue("mapsLat", data.lat);
+          setValue("mapsLng", data.lng);
+        } else {
+          setResolveError("Couldn't extract coordinates — try a full Google Maps URL or enter lat/lng manually");
+        }
+      } catch {
+        setResolveError("Failed to resolve URL — enter coordinates manually");
+      } finally {
+        setResolving(false);
+      }
     }
   }
 
@@ -168,29 +199,33 @@ export default function Step2Contact({ onNext, onBack }: Props) {
       <Field
         label="Google Maps URL"
         error={errors.mapsUrl?.message}
-        hint="Paste any Google Maps share link — coordinates are extracted automatically"
+        hint="Paste any Google Maps link including short links (maps.app.goo.gl/…) — coordinates extracted automatically"
       >
         <Input
           value={mapsUrl ?? ""}
           onChange={handleMapsUrlChange}
-          placeholder="https://maps.google.com/?q=13.7563,100.5018"
+          placeholder="https://maps.app.goo.gl/… or https://maps.google.com/…"
         />
       </Field>
+
+      {resolveError && (
+        <p style={{ fontSize: 12, color: "#dc2626", marginBottom: 12, marginTop: -8 }}>{resolveError}</p>
+      )}
 
       <div
         style={{
           display: "flex",
           gap: 12,
           padding: "10px 14px",
-          background: coordsSet ? "#f0fdf4" : "#f9fafb",
-          border: `1px solid ${coordsSet ? "#bbf7d0" : "#e5e7eb"}`,
+          background: resolving ? "#fffbeb" : coordsSet ? "#f0fdf4" : "#f9fafb",
+          border: `1px solid ${resolving ? "#fde68a" : coordsSet ? "#bbf7d0" : "#e5e7eb"}`,
           borderRadius: 8,
           marginBottom: "1.25rem",
           alignItems: "center",
         }}
       >
-        <span style={{ fontSize: 12, color: coordsSet ? "#166534" : "#9ca3af", fontWeight: 500 }}>
-          {coordsSet ? "✓ Coordinates detected" : "Coordinates"}
+        <span style={{ fontSize: 12, color: resolving ? "#92400e" : coordsSet ? "#166534" : "#9ca3af", fontWeight: 500 }}>
+          {resolving ? "⏳ Resolving URL…" : coordsSet ? "✓ Coordinates detected" : "Coordinates"}
         </span>
         <span style={{ fontSize: 12, color: "#6b7280", marginLeft: "auto" }}>
           Lat: <strong>{mapsLat?.toFixed(6)}</strong> &nbsp; Lng: <strong>{mapsLng?.toFixed(6)}</strong>
