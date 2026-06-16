@@ -35,6 +35,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       cfProjectName: data.slug,
       status: "deploying",
       theme: data.theme,
+      formData: JSON.stringify(data),
     });
 
     // Deploy inline (CF Workers have 30s CPU limit but wall-clock can be longer with subrequests)

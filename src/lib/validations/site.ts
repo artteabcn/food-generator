@@ -7,6 +7,21 @@ const DaySchema = z
   })
   .nullable();
 
+const LocaleContentSchema = z.object({
+  heroEyebrow: z.string().default(""),
+  heroTitle: z.string().default(""),
+  heroSubtitle: z.string().default(""),
+  aboutTitle: z.string().default(""),
+  aboutPullquote: z.string().default(""),
+  aboutBody: z.string().default(""),
+  menuIntro: z.string().default(""),
+  footerTagline: z.string().default(""),
+  footerAddressShort: z.string().default(""),
+  footerHoursShort: z.string().default(""),
+});
+
+export type LocaleContent = z.infer<typeof LocaleContentSchema>;
+
 export const MenuItemSchema = z.object({
   category: z.string().default(""),
   name: z.string().min(1, "Item name required"),
@@ -77,6 +92,21 @@ export const SiteFormSchema = z.object({
     )
     .max(6, "Maximum 6 photos"),
   menuItems: z.array(MenuItemSchema).default([]),
+
+  // Translations (FR + TH — optional, falls back to EN if empty)
+  translations: z.object({
+    fr: LocaleContentSchema,
+    th: LocaleContentSchema,
+  }).default({ fr: {}, th: {} }),
+
+  // Step 7 — Logo (optional; auto-generated SVG if omitted)
+  logo: z
+    .object({
+      data: z.string(),     // base64 encoded file content
+      mimeType: z.string(),
+      name: z.string(),
+    })
+    .optional(),
 
   // Step 6 — Theme
   theme: z.enum([

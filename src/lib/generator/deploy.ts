@@ -3,8 +3,12 @@ import {
   generateSiteConfig,
   generateWranglerToml,
   generateEnJson,
+  generateFrJson,
+  generateThJson,
   generateWorkflow,
+  generateLogoSvg,
 } from "./template";
+import { THEMES } from "@/lib/themes";
 import {
   createRepoFromTemplate,
   commitFile,
@@ -95,40 +99,13 @@ export async function deployRestaurantSite(
     enSha
   );
 
-  // FR and TH get same content as EN for now (agency updates later)
-  const frSha = await getFileSha(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "src/i18n/fr.json"
-  );
-  await commitFile(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "src/i18n/fr.json",
-    toBase64(enJson),
-    "content: add FR placeholder translations",
-    branch,
-    frSha
-  );
+  const frJson = generateFrJson(data);
+  const frSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "src/i18n/fr.json");
+  await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "src/i18n/fr.json", toBase64(frJson), "content: add FR translations", branch, frSha);
 
-  const thSha = await getFileSha(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "src/i18n/th.json"
-  );
-  await commitFile(
-    env.GITHUB_TOKEN,
-    env.GITHUB_OWNER,
-    repoName,
-    "src/i18n/th.json",
-    toBase64(enJson),
-    "content: add TH placeholder translations",
-    branch,
-    thSha
-  );
+  const thJson = generateThJson(data);
+  const thSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "src/i18n/th.json");
+  await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "src/i18n/th.json", toBase64(thJson), "content: add TH translations", branch, thSha);
 
   // 4. Commit photos
   for (let i = 0; i < data.photos.length; i++) {
@@ -153,7 +130,20 @@ export async function deployRestaurantSite(
     );
   }
 
-  // 5. Create D1 database + apply migration
+  // 5. Commit logo (uploaded or auto-generated SVG)
+  const theme = THEMES.find((t) => t.id === data.theme);
+  const accentColor = theme?.preview.accent ?? "#374151";
+  const logoExt = data.logo
+    ? (data.logo.mimeType === "image/svg+xml" ? "svg" : data.logo.mimeType.split("/")[1] || "png")
+    : "svg";
+  const logoPath = `public/images/logo.${logoExt}`;
+  const logoContent = data.logo
+    ? data.logo.data
+    : toBase64(generateLogoSvg(data.name, accentColor));
+  const logoSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, logoPath);
+  await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, logoPath, logoContent, "content: add restaurant logo", branch, logoSha);
+
+  // 6. Create D1 database + apply migration
   const dbName = `${data.slug}-db`;
   const { uuid: d1Uuid } = await createD1Database(env.CF_API_TOKEN, env.CF_ACCOUNT_ID, dbName);
   const migrationSql = `CREATE TABLE IF NOT EXISTS bookings (

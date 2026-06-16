@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { SiteFormData } from "@/lib/validations/site";
 import { THEMES } from "@/lib/themes";
+import { StepHeader } from "./shared";
+
 export interface DeploySuccess {
   repoUrl: string;
   pagesUrl: string;
@@ -10,6 +12,8 @@ export interface DeploySuccess {
 interface Props {
   onBack: () => void;
   onSuccess: (result: DeploySuccess) => void;
+  stepNumber?: number;
+  totalSteps?: number;
 }
 
 type StatusStep = {
@@ -102,7 +106,7 @@ function Collapsible({ title, children, defaultOpen = false }: CollapsibleProps)
   );
 }
 
-export default function Step7Deploy({ onBack, onSuccess }: Props) {
+export default function Step7Deploy({ onBack, onSuccess, stepNumber = 7, totalSteps = 7 }: Props) {
   const { getValues } = useFormContext<SiteFormData>();
   const data = getValues();
   const theme = THEMES.find((t) => t.id === data.theme);
@@ -240,27 +244,11 @@ export default function Step7Deploy({ onBack, onSuccess }: Props) {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      <div style={{ marginBottom: "1.75rem" }}>
-        <p
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#9ca3af",
-            marginBottom: 4,
-          }}
-        >
-          Step 7 of 7
-        </p>
-        <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#111827" }}>
-          Review & Deploy
-        </h2>
-        <p style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>
-          Confirm the details, then deploy. This will create a GitHub repo and
-          Cloudflare Pages project.
-        </p>
-      </div>
+      <StepHeader
+        step={stepNumber}
+        title="Review & Deploy"
+        subtitle={`Step ${stepNumber} of ${totalSteps} · Confirm the details, then deploy. This creates a GitHub repo and Cloudflare Pages project.`}
+      />
 
       {/* Summary */}
       {!deploying && !done && (
@@ -276,7 +264,7 @@ export default function Step7Deploy({ onBack, onSuccess }: Props) {
 
           <Collapsible title="Contact">
             <SummaryRow label="WhatsApp" value={data.whatsappDisplay} />
-            <SummaryRow label="Instagram" value={data.instagram} />
+            <SummaryRow label={data.socialType !== "none" ? data.socialType : "Social"} value={data.socialHandle} />
             <SummaryRow
               label="Coordinates"
               value={`${data.mapsLat}, ${data.mapsLng}`}

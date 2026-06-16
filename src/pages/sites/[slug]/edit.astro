@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+import { db } from "@/lib/db";
+import { sites } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import WizardEdit from "@/components/wizard/WizardEdit";
+import { SiteFormSchema } from "@/lib/validations/site";
+
+const { slug } = Astro.params;
+const database = db(Astro.locals.runtime.env.DB);
+const [site] = await database.select().from(sites).where(eq(sites.slug, slug!));
+
+if (!site) return Astro.redirect("/");
+
+let initialData;
+try {
+  if (!site.formData) throw new Error("no form data");
+  const parsed = JSON.parse(site.formData);
+  initialData = SiteFormSchema.parse(parsed);
+} catch {
+  return Astro.redirect(`/sites/${slug}`);
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit {site.name} — Food Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #f8f7f4; min-height: 100dvh; color: #0f172a; -webkit-font-smoothing: antialiased; }
+      a { color: inherit; text-decoration: none; }
+      input, select, textarea, button { font: inherit; }
+    </style>
+  </head>
+  <body>
+    <WizardEdit
+      client:load
+      slug={site.slug}
+      initialData={initialData}
+      deployUrl={site.deployUrl ?? null}
+      githubRepo={site.githubRepo}
+    />
+  </body>
+</html>

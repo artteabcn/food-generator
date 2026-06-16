@@ -1,6 +1,8 @@
 import { forwardRef } from "react";
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
+const EASE = "cubic-bezier(0.32,0.72,0,1)";
+
 // ---- Field wrapper ----
 interface FieldProps {
   label: string;
@@ -11,26 +13,29 @@ interface FieldProps {
 
 export function Field({ label, error, hint, children }: FieldProps) {
   return (
-    <div style={{ marginBottom: "1.25rem" }}>
-      <label
-        style={{
-          display: "block",
-          fontSize: 13,
-          fontWeight: 500,
-          color: "#374151",
-          marginBottom: 6,
-        }}
-      >
+    <div style={{ marginBottom: "1.375rem" }}>
+      <label style={{
+        display: "block",
+        fontSize: 13,
+        fontWeight: 600,
+        color: "#1e293b",
+        marginBottom: hint ? 4 : 6,
+        letterSpacing: "-0.005em",
+        lineHeight: 1.3,
+      }}>
         {label}
       </label>
       {hint && (
-        <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 7, lineHeight: 1.55, fontWeight: 400 }}>
           {hint}
         </p>
       )}
       {children}
       {error && (
-        <p style={{ fontSize: 12, color: "#dc2626", marginTop: 4 }}>
+        <p style={{ fontSize: 12, color: "#ef4444", marginTop: 5, display: "flex", alignItems: "center", gap: 4 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
           {error}
         </p>
       )}
@@ -50,21 +55,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         style={{
           width: "100%",
-          padding: "9px 12px",
-          border: `1px solid ${hasError ? "#fca5a5" : "#e5e7eb"}`,
-          borderRadius: 8,
+          padding: "10px 14px",
+          border: `1.5px solid ${hasError ? "#fca5a5" : "#e2e8f0"}`,
+          borderRadius: 10,
           fontSize: 14,
-          color: "#111827",
-          background: hasError ? "#fff7f7" : "white",
+          color: "#0f172a",
+          background: hasError ? "#fff8f8" : "white",
           outline: "none",
-          transition: "border-color 0.15s",
+          transition: `border-color 0.2s ${EASE}, box-shadow 0.2s ${EASE}`,
+          fontFamily: "inherit",
+          letterSpacing: "-0.005em",
           ...style,
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = hasError ? "#ef4444" : "#111827";
+          e.currentTarget.style.borderColor = hasError ? "#ef4444" : "#0f172a";
+          e.currentTarget.style.boxShadow = hasError
+            ? "0 0 0 3px rgba(239,68,68,0.1)"
+            : "0 0 0 3px rgba(15,23,42,0.08)";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = hasError ? "#fca5a5" : "#e5e7eb";
+          e.currentTarget.style.borderColor = hasError ? "#fca5a5" : "#e2e8f0";
+          e.currentTarget.style.boxShadow = "none";
           props.onBlur?.(e);
         }}
         {...props}
@@ -86,22 +97,29 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         rows={4}
         style={{
           width: "100%",
-          padding: "9px 12px",
-          border: `1px solid ${hasError ? "#fca5a5" : "#e5e7eb"}`,
-          borderRadius: 8,
+          padding: "10px 14px",
+          border: `1.5px solid ${hasError ? "#fca5a5" : "#e2e8f0"}`,
+          borderRadius: 10,
           fontSize: 14,
-          color: "#111827",
-          background: hasError ? "#fff7f7" : "white",
+          color: "#0f172a",
+          background: hasError ? "#fff8f8" : "white",
           outline: "none",
           resize: "vertical",
-          transition: "border-color 0.15s",
+          transition: `border-color 0.2s ${EASE}, box-shadow 0.2s ${EASE}`,
+          fontFamily: "inherit",
+          lineHeight: 1.6,
+          letterSpacing: "-0.005em",
           ...style,
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = hasError ? "#ef4444" : "#111827";
+          e.currentTarget.style.borderColor = hasError ? "#ef4444" : "#0f172a";
+          e.currentTarget.style.boxShadow = hasError
+            ? "0 0 0 3px rgba(239,68,68,0.1)"
+            : "0 0 0 3px rgba(15,23,42,0.08)";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = hasError ? "#fca5a5" : "#e5e7eb";
+          e.currentTarget.style.borderColor = hasError ? "#fca5a5" : "#e2e8f0";
+          e.currentTarget.style.boxShadow = "none";
           props.onBlur?.(e);
         }}
         {...props}
@@ -122,16 +140,27 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         ref={ref}
         style={{
           width: "100%",
-          padding: "9px 12px",
-          border: `1px solid ${hasError ? "#fca5a5" : "#e5e7eb"}`,
-          borderRadius: 8,
+          padding: "10px 14px",
+          border: `1.5px solid ${hasError ? "#fca5a5" : "#e2e8f0"}`,
+          borderRadius: 10,
           fontSize: 14,
-          color: "#111827",
+          color: "#0f172a",
           background: "white",
           outline: "none",
           cursor: "pointer",
           appearance: "auto",
+          fontFamily: "inherit",
+          letterSpacing: "-0.005em",
+          transition: `border-color 0.2s ${EASE}, box-shadow 0.2s ${EASE}`,
           ...style,
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = "#0f172a";
+          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(15,23,42,0.08)";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = hasError ? "#fca5a5" : "#e2e8f0";
+          e.currentTarget.style.boxShadow = "none";
         }}
         {...props}
       >
@@ -150,23 +179,20 @@ interface StepHeaderProps {
 
 export function StepHeader({ step, title, subtitle }: StepHeaderProps) {
   return (
-    <div style={{ marginBottom: "1.75rem" }}>
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#9ca3af",
-          marginBottom: 4,
-        }}
-      >
-        Step {step} of 7
-      </p>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#111827" }}>
-        {title}
-      </h2>
-      <p style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>
+    <div style={{ marginBottom: "1.875rem", paddingBottom: "1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 8 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: "50%",
+          background: "#0f172a",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "white" }}>{step}</span>
+        </div>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.035em", lineHeight: 1.15 }}>
+          {title}
+        </h2>
+      </div>
+      <p style={{ fontSize: 13.5, color: "#64748b", lineHeight: 1.55, paddingLeft: 39, fontWeight: 400 }}>
         {subtitle}
       </p>
     </div>
@@ -181,38 +207,41 @@ interface NavButtonsProps {
   loading?: boolean;
 }
 
-export function NavButtons({
-  onNext,
-  onBack,
-  nextLabel = "Continue →",
-  loading,
-}: NavButtonsProps) {
+export function NavButtons({ onNext, onBack, nextLabel = "Continue", loading }: NavButtonsProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        marginTop: "2rem",
-        paddingTop: "1.5rem",
-        borderTop: "1px solid #f3f4f6",
-      }}
-    >
+    <div style={{ display: "flex", gap: 10, marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #f1f5f9", alignItems: "center" }}>
       {onBack && (
         <button
           type="button"
           onClick={onBack}
           style={{
-            padding: "9px 20px",
-            border: "1px solid #e5e7eb",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#6b7280",
+            padding: "9px 18px",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 100,
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#64748b",
             background: "white",
             cursor: "pointer",
+            transition: `all 0.25s ${EASE}`,
+            letterSpacing: "-0.01em",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.borderColor = "#94a3b8";
+            e.currentTarget.style.color = "#0f172a";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.borderColor = "#e2e8f0";
+            e.currentTarget.style.color = "#64748b";
           }}
         >
-          ← Back
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back
         </button>
       )}
       {onNext && (
@@ -221,21 +250,41 @@ export function NavButtons({
           onClick={onNext}
           disabled={loading}
           style={{
-            padding: "9px 24px",
+            padding: "10px 20px",
             border: "none",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 500,
+            borderRadius: 100,
+            fontSize: 13,
+            fontWeight: 700,
             color: "white",
-            background: loading ? "#9ca3af" : "#111827",
+            background: loading ? "#94a3b8" : "#0f172a",
             cursor: loading ? "not-allowed" : "pointer",
             marginLeft: onBack ? "auto" : undefined,
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
+            boxShadow: loading ? "none" : "0 2px 8px rgba(15,23,42,0.18)",
+            transition: `all 0.25s ${EASE}`,
+            letterSpacing: "-0.01em",
+          }}
+          onMouseOver={(e) => {
+            if (!loading) {
+              e.currentTarget.style.background = "#1e293b";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 5px 18px rgba(15,23,42,0.22)";
+            }
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = loading ? "#94a3b8" : "#0f172a";
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = loading ? "none" : "0 2px 8px rgba(15,23,42,0.18)";
           }}
         >
           {loading ? "Please wait…" : nextLabel}
+          {!loading && (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          )}
         </button>
       )}
     </div>
@@ -245,19 +294,12 @@ export function NavButtons({
 // ---- Section divider ----
 export function SectionDivider({ label }: { label: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        margin: "1.5rem 0 1.25rem",
-      }}
-    >
-      <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
-      <span style={{ fontSize: 11, color: "#d1d5db", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "1.625rem 0 1.25rem" }}>
+      <div style={{ flex: 1, height: 1, background: "#e9ecef" }} />
+      <span style={{ fontSize: 10.5, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
         {label}
       </span>
-      <div style={{ flex: 1, height: 1, background: "#f3f4f6" }} />
+      <div style={{ flex: 1, height: 1, background: "#e9ecef" }} />
     </div>
   );
 }

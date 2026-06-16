@@ -9,9 +9,16 @@ import Step4Content from "./Step4Content";
 import Step5Menu from "./Step5Menu";
 import Step6Theme from "./Step6Theme";
 import StepLogo from "./StepLogo";
-import Step7Deploy, { type DeploySuccess } from "./Step7Deploy";
+import StepRedeploy from "./StepRedeploy";
 
 const EASE = "cubic-bezier(0.32,0.72,0,1)";
+
+interface Props {
+  slug: string;
+  initialData: SiteFormData;
+  deployUrl: string | null;
+  githubRepo: string;
+}
 
 const STEPS = [
   { id: 1, label: "Basic Info",  desc: "Name & timezone" },
@@ -21,35 +28,8 @@ const STEPS = [
   { id: 5, label: "Menu",        desc: "Photos or items" },
   { id: 6, label: "Theme",       desc: "Visual identity" },
   { id: 7, label: "Logo",        desc: "Upload or auto-generate" },
-  { id: 8, label: "Deploy",      desc: "Launch to production" },
+  { id: 8, label: "Save",        desc: "Commit & redeploy" },
 ];
-
-const EMPTY_LOCALE = {
-  heroEyebrow: "", heroTitle: "", heroSubtitle: "", aboutTitle: "", aboutPullquote: "",
-  aboutBody: "", menuIntro: "", footerTagline: "", footerAddressShort: "", footerHoursShort: "",
-};
-
-const DEFAULT_VALUES: Partial<SiteFormData> = {
-  timezone: "Asia/Bangkok",
-  defaultLocale: "en",
-  theme: "baroque-dark",
-  aboutTitle: "The room",
-  hours: {
-    monday: null,
-    tuesday: { open: "18:00", close: "00:00" },
-    wednesday: { open: "18:00", close: "00:00" },
-    thursday: { open: "18:00", close: "00:00" },
-    friday: { open: "18:00", close: "00:00" },
-    saturday: { open: "18:00", close: "00:00" },
-    sunday: { open: "18:00", close: "00:00" },
-  },
-  menuMode: "photos",
-  photos: [],
-  menuItems: [],
-  mapsLat: 13.7563,
-  mapsLng: 100.5018,
-  translations: { fr: EMPTY_LOCALE, th: EMPTY_LOCALE },
-};
 
 function CheckIcon() {
   return (
@@ -59,14 +39,14 @@ function CheckIcon() {
   );
 }
 
-export default function WizardShell() {
+export default function WizardEdit({ slug, initialData, deployUrl, githubRepo }: Props) {
   const [step, setStep] = useState(1);
-  const [deployResult, setDeployResult] = useState<DeploySuccess | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const methods = useForm<SiteFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(SiteFormSchema) as any,
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: initialData,
     mode: "onChange",
   });
 
@@ -103,20 +83,34 @@ export default function WizardShell() {
                 <span style={{ fontSize: 14, fontWeight: 700, color: "white", letterSpacing: "-0.02em", lineHeight: 1 }}>Food Generator</span>
               </div>
             </div>
-            <a href="/" style={{ fontSize: 12.5, color: "rgba(255,255,255,0.4)", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 500, transition: `color 0.2s ${EASE}` }}
+            <a href={`/sites/${slug}`} style={{ fontSize: 12.5, color: "rgba(255,255,255,0.4)", display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 500, transition: `color 0.2s ${EASE}` }}
                onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.75)"; }}
                onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)"; }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              Dashboard
+              Back to site
             </a>
           </div>
         </header>
 
         {/* Sub-header */}
         <div style={{ background: "white", borderBottom: "1px solid #f1f5f9", padding: "0 2rem" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1.125rem 0" }}>
-            <h1 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>New Restaurant Site</h1>
-            <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 3, fontWeight: 400 }}>Fill in each section to generate and deploy your site.</p>
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1.125rem 0", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <h1 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
+                Edit: {initialData.name}
+              </h1>
+              <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 3, fontWeight: 400 }}>Changes push to GitHub and redeploy automatically.</p>
+            </div>
+            {deployUrl && (
+              <a href={deployUrl} target="_blank" rel="noopener noreferrer"
+                 style={{ fontSize: 12.5, color: "#0f172a", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", border: "1.5px solid rgba(0,0,0,0.1)", borderRadius: 100 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                View live site
+              </a>
+            )}
           </div>
         </div>
 
@@ -132,12 +126,8 @@ export default function WizardShell() {
                 <div
                   key={s.id}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "9px 11px",
-                    borderRadius: 9,
-                    marginBottom: 1,
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "9px 11px", borderRadius: 9, marginBottom: 1,
                     background: isActive ? "#0f172a" : "transparent",
                     cursor: isDone ? "pointer" : "default",
                     transition: `background 0.3s ${EASE}`,
@@ -146,18 +136,12 @@ export default function WizardShell() {
                 >
                   <div style={{
                     width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-                    background: isActive
-                      ? "rgba(255,255,255,0.12)"
-                      : isDone
-                        ? "#dcfce7"
-                        : "#f8f7f4",
+                    background: isActive ? "rgba(255,255,255,0.12)" : isDone ? "#dcfce7" : "#f8f7f4",
                     border: `1.5px solid ${isActive ? "rgba(255,255,255,0.15)" : isDone ? "#bbf7d0" : "#e9ecef"}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: `all 0.3s ${EASE}`,
                   }}>
-                    {isDone ? (
-                      <CheckIcon />
-                    ) : (
+                    {isDone ? <CheckIcon /> : (
                       <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? "rgba(255,255,255,0.9)" : "#94a3b8" }}>
                         {s.id}
                       </span>
@@ -165,21 +149,15 @@ export default function WizardShell() {
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <span style={{
-                      display: "block",
-                      fontSize: 13,
+                      display: "block", fontSize: 13, lineHeight: 1.2, letterSpacing: "-0.01em",
                       fontWeight: isActive ? 700 : isDone ? 500 : 400,
                       color: isActive ? "white" : isDone ? "#374151" : "#94a3b8",
-                      letterSpacing: "-0.01em",
-                      lineHeight: 1.2,
                     }}>
                       {s.label}
                     </span>
                     <span style={{
-                      display: "block",
-                      fontSize: 11,
+                      display: "block", fontSize: 11, lineHeight: 1.2, marginTop: 1,
                       color: isActive ? "rgba(255,255,255,0.45)" : isDone ? "#9ca3af" : "#cbd5e1",
-                      marginTop: 1,
-                      lineHeight: 1.2,
                     }}>
                       {s.desc}
                     </span>
@@ -191,16 +169,10 @@ export default function WizardShell() {
 
           {/* Step content */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Mobile + desktop progress bar */}
+            {/* Progress bar */}
             <div style={{ background: "white", borderRadius: 10, border: "1px solid rgba(0,0,0,0.055)", padding: "10px 16px", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
               <div style={{ flex: 1, height: 3, background: "#f1f5f9", borderRadius: 100, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%",
-                  width: `${((step - 1) / (STEPS.length - 1)) * 100}%`,
-                  background: "#0f172a",
-                  borderRadius: 100,
-                  transition: `width 0.5s ${EASE}`,
-                }} />
+                <div style={{ height: "100%", width: `${((step - 1) / (STEPS.length - 1)) * 100}%`, background: "#0f172a", borderRadius: 100, transition: `width 0.5s ${EASE}` }} />
               </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", whiteSpace: "nowrap", letterSpacing: "-0.01em" }}>
                 {step} <span style={{ color: "#cbd5e1", fontWeight: 400 }}>/ {STEPS.length}</span>
@@ -208,28 +180,31 @@ export default function WizardShell() {
             </div>
 
             <div key={step} className="step-panel" style={{ background: "white", borderRadius: 16, border: "1px solid rgba(0,0,0,0.055)", padding: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.03), 0 4px 16px rgba(0,0,0,0.04)" }}>
-              {step === 1 && <Step1Basic onNext={next} />}
+              {step === 1 && <Step1Basic onNext={next} editMode />}
               {step === 2 && <Step2Contact onNext={next} onBack={prev} />}
               {step === 3 && <Step3Hours onNext={next} onBack={prev} />}
               {step === 4 && <Step4Content onNext={next} onBack={prev} />}
               {step === 5 && <Step5Menu onNext={next} onBack={prev} />}
               {step === 6 && <Step6Theme onNext={next} onBack={prev} />}
               {step === 7 && <StepLogo onNext={next} onBack={prev} stepNumber={7} />}
-              {step === 8 && <Step7Deploy onBack={prev} onSuccess={setDeployResult} stepNumber={8} totalSteps={8} />}
+              {step === 8 && (
+                <StepRedeploy slug={slug} onBack={prev} onSuccess={() => setSaved(true)} deployUrl={deployUrl} githubRepo={githubRepo} />
+              )}
             </div>
 
-            {deployResult && (
+            {saved && (
               <div style={{ marginTop: "1.125rem", padding: "1.25rem 1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 14 }}>
-                <p style={{ fontWeight: 700, color: "#166534", marginBottom: 10, fontSize: 14.5, letterSpacing: "-0.01em" }}>Site deployed successfully.</p>
+                <p style={{ fontWeight: 700, color: "#166534", marginBottom: 10, fontSize: 14.5, letterSpacing: "-0.01em" }}>
+                  Changes saved — redeploying now.
+                </p>
                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                  <a href={deployResult.pagesUrl} target="_blank" rel="noopener noreferrer"
-                     style={{ fontSize: 13.5, color: "#15803d", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    View live site
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                  </a>
-                  <a href={deployResult.repoUrl} target="_blank" rel="noopener noreferrer"
-                     style={{ fontSize: 13.5, color: "#64748b" }}>
-                    GitHub repo →
+                  {deployUrl && (
+                    <a href={deployUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13.5, color: "#15803d", fontWeight: 600 }}>
+                      View live site →
+                    </a>
+                  )}
+                  <a href={`/sites/${slug}`} style={{ fontSize: 13.5, color: "#64748b" }}>
+                    Back to site details →
                   </a>
                 </div>
               </div>

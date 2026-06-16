@@ -1,5 +1,10 @@
-import type { SiteFormData } from "@/lib/validations/site";
+import type { SiteFormData, LocaleContent } from "@/lib/validations/site";
 import { THEMES } from "@/lib/themes";
+
+export function generateLogoSvg(restaurantName: string, accentColor: string): string {
+  const initial = (restaurantName.trim().split(/\s+/)[0]?.[0] ?? "R").toUpperCase();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="10" fill="${accentColor}"/><text x="40" y="56" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="44" fill="rgba(255,255,255,0.92)">${initial}</text></svg>`;
+}
 
 export function generateSiteConfig(data: SiteFormData): string {
   const theme = THEMES.find((t) => t.id === data.theme)!;
@@ -7,6 +12,11 @@ export function generateSiteConfig(data: SiteFormData): string {
     const ext = p.mimeType.split("/")[1] || "jpeg";
     return `/images/menu${i + 1}.${ext}`;
   });
+
+  const logoExt = data.logo
+    ? (data.logo.mimeType === "image/svg+xml" ? "svg" : data.logo.mimeType.split("/")[1] || "png")
+    : "svg";
+  const logoPath = `/images/logo.${logoExt}`;
 
   return `import type { SiteConfig } from "./types";
 
@@ -42,6 +52,7 @@ export const siteConfig: SiteConfig = {
   },
   menuMode: ${JSON.stringify(data.menuMode)},
   images: {
+    logo: ${JSON.stringify(logoPath)},
     menu: ${JSON.stringify(photos)},
   },
 };
@@ -100,27 +111,30 @@ RESTAURANT_TIMEZONE = "${data.timezone}"
 `;
 }
 
-export function generateEnJson(data: SiteFormData): string {
-  const json = {
-    nav: {
-      home: "Home",
-      menu: "Menu",
-      booking: "Reservations",
-      contact: "Contact",
-    },
+function buildLocaleJson(data: SiteFormData, t: LocaleContent) {
+  // t fields fall back to EN values if empty
+  const heroEyebrow = t.heroEyebrow || data.heroEyebrow;
+  const heroTitle = t.heroTitle || data.heroTitle;
+  const heroSubtitle = t.heroSubtitle || data.heroSubtitle;
+  const aboutTitle = t.aboutTitle || data.aboutTitle;
+  const aboutPullquote = t.aboutPullquote || data.aboutPullquote;
+  const aboutBody = t.aboutBody || data.aboutBody;
+  const menuIntro = t.menuIntro || data.menuIntro;
+  const footerTagline = t.footerTagline || data.footerTagline;
+  const footerAddressShort = t.footerAddressShort || data.footerAddressShort;
+  const footerHoursShort = t.footerHoursShort || data.footerHoursShort;
+
+  return {
+    nav: { home: "Home", menu: "Menu", booking: "Reservations", contact: "Contact" },
     hero: {
-      eyebrow: data.heroEyebrow,
+      eyebrow: heroEyebrow,
       tonight: "Tonight",
-      title: data.heroTitle,
-      subtitle: data.heroSubtitle,
+      title: heroTitle,
+      subtitle: heroSubtitle,
       cta: "Reserve a table",
       secondaryCta: "View hours",
     },
-    about: {
-      title: data.aboutTitle,
-      pullquote: data.aboutPullquote,
-      body: data.aboutBody,
-    },
+    about: { title: aboutTitle, pullquote: aboutPullquote, body: aboutBody },
     hours: {
       title: "Hours",
       tonightLabel: "Tonight",
@@ -143,7 +157,7 @@ export function generateEnJson(data: SiteFormData): string {
     reservation: { line: "Reserve your table.", cta: "Reserve a table" },
     menu: {
       title: "Menu",
-      intro: data.menuIntro,
+      intro: menuIntro,
       comingSoon: "Full menu coming soon.",
       comingSoonSub: "Ask the kitchen about tonight's plates.",
       cta: "Reserve to taste tonight",
@@ -154,7 +168,7 @@ export function generateEnJson(data: SiteFormData): string {
       meta: {
         title: "Reservation note",
         serviceLabel: "Service",
-        serviceValue: data.footerHoursShort,
+        serviceValue: footerHoursShort,
         confirmLabel: "Confirmation",
         confirmValue: "Replied on WhatsApp.",
         directLabel: "Last-minute?",
@@ -170,11 +184,9 @@ export function generateEnJson(data: SiteFormData): string {
       submit: "Request reservation",
       submitting: "Sending…",
       successTitle: "Thank you.",
-      successBody:
-        "Your request is in. We'll confirm by WhatsApp shortly.",
+      successBody: "Your request is in. We'll confirm by WhatsApp shortly.",
       errorTitle: "Something went wrong.",
-      errorBody:
-        "Please try again, or message us directly on WhatsApp.",
+      errorBody: "Please try again, or message us directly on WhatsApp.",
     },
     validation: {
       name: "Please enter your name.",
@@ -196,10 +208,10 @@ export function generateEnJson(data: SiteFormData): string {
       follow: data.socialHandle ? `Follow us · ${data.socialHandle}` : "Follow us",
     },
     footer: {
-      tagline: data.footerTagline,
+      tagline: footerTagline,
       rights: "All rights reserved.",
-      addressShort: data.footerAddressShort,
-      hoursShort: data.footerHoursShort,
+      addressShort: footerAddressShort,
+      hoursShort: footerHoursShort,
     },
     menuItems: (data.menuItems ?? []).map(item => ({
       category: item.category,
@@ -209,5 +221,30 @@ export function generateEnJson(data: SiteFormData): string {
       tags: item.tags,
     })),
   };
+}
+
+export function generateEnJson(data: SiteFormData): string {
+  const enContent: LocaleContent = {
+    heroEyebrow: data.heroEyebrow,
+    heroTitle: data.heroTitle,
+    heroSubtitle: data.heroSubtitle,
+    aboutTitle: data.aboutTitle,
+    aboutPullquote: data.aboutPullquote,
+    aboutBody: data.aboutBody,
+    menuIntro: data.menuIntro,
+    footerTagline: data.footerTagline,
+    footerAddressShort: data.footerAddressShort,
+    footerHoursShort: data.footerHoursShort,
+  };
+  const json = buildLocaleJson(data, enContent);
   return JSON.stringify(json, null, 2);
 }
+
+export function generateFrJson(data: SiteFormData): string {
+  return JSON.stringify(buildLocaleJson(data, data.translations?.fr ?? {}), null, 2);
+}
+
+export function generateThJson(data: SiteFormData): string {
+  return JSON.stringify(buildLocaleJson(data, data.translations?.th ?? {}), null, 2);
+}
+

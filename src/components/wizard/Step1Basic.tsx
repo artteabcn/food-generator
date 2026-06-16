@@ -4,6 +4,7 @@ import { StepHeader, Field, Input, Select, NavButtons } from "./shared";
 
 interface Props {
   onNext: () => void;
+  editMode?: boolean;
 }
 
 const TIMEZONES = [
@@ -34,7 +35,7 @@ function slugify(str: string): string {
     .replace(/-+/g, "-");
 }
 
-export default function Step1Basic({ onNext }: Props) {
+export default function Step1Basic({ onNext, editMode = false }: Props) {
   const {
     register,
     setValue,
@@ -86,12 +87,14 @@ export default function Step1Basic({ onNext }: Props) {
       <Field
         label="URL Slug"
         error={errors.slug?.message}
-        hint="Used as the subdomain: slug.pages.dev"
+        hint={editMode ? "Slug cannot be changed after deployment" : "Used as the subdomain: slug.pages.dev"}
       >
         <Input
           {...register("slug")}
           placeholder="le-jardin"
           hasError={!!errors.slug}
+          disabled={editMode}
+          style={editMode ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
         />
       </Field>
 

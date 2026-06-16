@@ -13,6 +13,7 @@ export const sites = sqliteTable("sites", {
     .notNull()
     .default("pending"),
   theme: text("theme").notNull(),
+  formData: text("form_data"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
