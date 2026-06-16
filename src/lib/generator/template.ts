@@ -80,7 +80,7 @@ jobs:
 `;
 }
 
-export function generateWranglerToml(data: SiteFormData): string {
+export function generateWranglerToml(data: SiteFormData, d1Uuid: string): string {
   return `name = "${data.slug}"
 compatibility_date = "2025-02-13"
 compatibility_flags = ["nodejs_compat"]
@@ -89,7 +89,7 @@ pages_build_output_dir = "./dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "${data.slug}-db"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "${d1Uuid}"
 migrations_dir = "./migrations"
 
 [vars]

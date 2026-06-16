@@ -12,7 +12,7 @@ import {
   getDefaultBranch,
   addRepoVariable,
 } from "./github";
-import { createPagesProject } from "./cloudflare-api";
+import { createPagesProject, createD1Database, applyD1Migration } from "./cloudflare-api";
 
 function toBase64(str: string): string {
   // Use TextEncoder for proper UTF-8 handling in CF Workers
@@ -153,8 +153,25 @@ export async function deployRestaurantSite(
     );
   }
 
-  // 5. Commit customized wrangler.toml
-  const wranglerContent = generateWranglerToml(data);
+  // 5. Create D1 database + apply migration
+  const dbName = `${data.slug}-db`;
+  const { uuid: d1Uuid } = await createD1Database(env.CF_API_TOKEN, env.CF_ACCOUNT_ID, dbName);
+  const migrationSql = `CREATE TABLE IF NOT EXISTS bookings (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT,
+    party_size INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    notes TEXT,
+    locale TEXT NOT NULL DEFAULT 'en',
+    created_at INTEGER NOT NULL
+  );`;
+  await applyD1Migration(env.CF_API_TOKEN, env.CF_ACCOUNT_ID, d1Uuid, migrationSql);
+
+  // Commit customized wrangler.toml with real D1 UUID
+  const wranglerContent = generateWranglerToml(data, d1Uuid);
   const wranglerSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "wrangler.toml");
   await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, "wrangler.toml", toBase64(wranglerContent), "chore: configure wrangler", branch, wranglerSha);
 
