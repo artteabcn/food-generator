@@ -21,9 +21,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
     const data = SiteFormSchema.parse(body);
 
-    // Insert pending record
-    const id = crypto.randomUUID();
     const database = db(env.DB);
+
+    // If a previous failed attempt exists for this slug, delete it and retry
+    await database.delete(sites).where(eq(sites.slug, data.slug));
+
+    const id = crypto.randomUUID();
     await database.insert(sites).values({
       id,
       name: data.name,
