@@ -53,6 +53,7 @@ export function generateWorkflow(branch: string): string {
 on:
   push:
     branches: [${branch}]
+  workflow_dispatch:
 
 jobs:
   deploy:

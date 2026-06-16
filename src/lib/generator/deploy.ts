@@ -180,11 +180,12 @@ export async function deployRestaurantSite(
   const workflowSha = await getFileSha(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, ".github/workflows/deploy.yml");
   await commitFile(env.GITHUB_TOKEN, env.GITHUB_OWNER, repoName, ".github/workflows/deploy.yml", toBase64(workflowContent), "chore: configure deployment workflow", branch, workflowSha);
 
-  // 7. Create CF Pages project
+  // 7. Create CF Pages project (production_branch must match actual git branch)
   const { subdomain } = await createPagesProject(
     env.CF_API_TOKEN,
     env.CF_ACCOUNT_ID,
-    cfProjectName
+    cfProjectName,
+    branch
   );
 
   // 8. Set all required GitHub Actions variables (CF_API_TOKEN stored as variable, not secret)
