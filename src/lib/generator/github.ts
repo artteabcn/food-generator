@@ -18,6 +18,14 @@ export async function createRepoFromTemplate(
   newRepoName: string,
   newOwner: string
 ): Promise<{ html_url: string; clone_url: string }> {
+  // Check if repo already exists (previous failed attempt)
+  const existingRes = await fetch(`${GITHUB_API}/repos/${newOwner}/${newRepoName}`, {
+    headers: ghHeaders(token),
+  });
+  if (existingRes.ok) {
+    return existingRes.json() as Promise<{ html_url: string; clone_url: string }>;
+  }
+
   const res = await fetch(
     `${GITHUB_API}/repos/${owner}/${templateRepo}/generate`,
     {
