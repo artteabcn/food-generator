@@ -1,0 +1,14 @@
+name = "food-generator"
+compatibility_date = "2025-02-13"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "food-generator-db"
+database_id = "REPLACE_WITH_D1_ID"
+migrations_dir = "./migrations"
+
+[vars]
+GITHUB_OWNER = "artteabcn"
+TEMPLATE_REPO = "restaurant-template"
