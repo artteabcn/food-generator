@@ -12,3 +12,6 @@ migrations_dir = "./migrations"
 [vars]
 GITHUB_OWNER = "artteabcn"
 TEMPLATE_REPO = "restaurant-template"
+
+[build]
+command = "npm run build"
